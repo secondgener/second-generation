@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mados Parduotuvė & Platforma</title>
+    <!-- Supabase ir SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Georgia', serif; background-color: #fafafa; color: #111; margin: 0; padding: 0; }
+        header { background: #000; color: #fff; padding: 20px; text-align: center; position: relative; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .premium-banner { background: linear-gradient(135deg, #111, #333); color: gold; padding: 30px; text-align: center; border-radius: 8px; margin: 20px 0; border: 1px solid gold; }
+        .btn { background: #000; color: #fff; padding: 12px 24px; border: none; cursor: pointer; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-premium { background: gold; color: #000; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; }
+        .card { background: #fff; border: 1px solid #eee; padding: 15px; display: flex; flex-direction: column; position: relative; }
+        .hold-badge { position: absolute; top: 10px; right: 10px; background: red; color: white; padding: 5px 10px; font-weight: bold; text-transform: uppercase; font-size: 12px; }
+        .filter-section { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 30px; background: #fff; padding: 20px; border: 1px solid #eee; }
+        .filter-section select, .filter-section input { padding: 10px; border: 1px solid #ccc; background: #fff; }
+        .admin-panel { background: #fff; border: 2px dashed #111; padding: 30px; margin-bottom: 40px; }
+        .form-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .nav-tabs { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; font-weight: bold; text-transform: uppercase; cursor: pointer; }
+        .nav-tabs span { padding: 5px 10px; border-bottom: 2px solid transparent; }
+        .nav-tabs .active { border-bottom: 2px solid #000; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>💎 LUXURY MARKETPLACE</h1>
+        <p>Vinted filtrai | Prabangus dizainas | Slaptas Admin</p>
+        <div id="auth-status" style="position: absolute; right: 20px; top: 25px;"></div>
+    </header>
+
+    <div class="container">
+        <!-- Slaptažodžio ir Prisijungimo Langas -->
+        <div id="auth-view" style="max-width: 400px; margin: 40px auto; background: white; padding: 30px; border: 1px solid #eee; display: none;">
+            <h2 style="text-align:center; text-transform:uppercase;">Prisijungimas</h2>
+            <input type="email" id="auth-email" placeholder="El. paštas" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ccc;">
+            <input type="password" id="auth-password" placeholder="Slaptažodis" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ccc;">
+            <button class="btn" onclick="app.login()" style="width:100%; margin-bottom:10px;">Prisijungti</button>
+            <button class="btn" onclick="app.signUp()" style="width:100%; background:#666;">Registruotis</button>
+        </div>
+
+        <div id="main-view">
+            <!-- Navigacijos Skiltys -->
+            <div class="nav-tabs">
+                <span class="active" onclick="app.switchTab('shop')">Parduotuvė</span>
+                <span onclick="app.switchTab('about')">About Us</span>
+                <span onclick="app.switchTab('support')">Customer Support</span>
+                <span onclick="app.switchTab('privacy')">Privacy Policy</span>
+                <span id="admin-tab" style="display:none; color: red;" onclick="app.switchTab('admin')">👑 Admin Panelė</span>
+            </div>
+
+            <!-- APRAŠOMOJI SKILTIS -->
+            <div id="content-shop">
+                <!-- Vinted stiliaus filtrai -->
+                <div class="filter-section">
+                    <input type="text" id="search-title" placeholder="Paieška pagal pavadinimą..." oninput="app.filterProducts()">
+                    <input type="number" id="filter-price-min" placeholder="Kaina nuo €" oninput="app.filterProducts()">
+                    <input type="number" id="filter-price-max" placeholder="Kaina iki €" oninput="app.filterProducts()">
+                    <select id="filter-brand" onchange="app.filterProducts()">
+                        <option value="">Visi prekių ženklai</option>
+                        <option value="Boss">Boss</option>
+                        <option value="Ralph Lauren">Ralph Lauren</option>
+                    </select>
+                    <select id="filter-color" onchange="app.filterProducts()">
+                        <option value="">Visos spalvos</option>
+                        <option value="Juoda">Juoda</option>
+                        <option value="Balta">Balta</option>
+                    </select>
+                    <select id="filter-size" onchange="app.filterProducts()">
+                        <option value="">Visi dydžiai</option>
+                        <option value="S">S</option>
+                        <option value="M">M</option>
+                        <option value="L">L</option>
+                    </select>
+                </div>
+
+                <!-- Prekių vitrina -->
+                <div class="grid" id="products-grid"></div>
+
+                <!-- Premium Baneris -->
+                <div class="premium-banner">
+                    <h2>💎 Tapkite PREMIUM nariu tik už 25€ / mėn!</h2>
+                    <p>Matykite naujausius mados laimikius 5 valandomis anksčiau nei kiti pirkėjai.</p>
+                    <button class="btn btn-premium" onclick="app.buyPremium()">Mokėti per PayPal</button>
+                </div>
+            </div>
+
+            <!-- KITOS SKILTYS -->
+            <div id="content-about" style="display:none; background:#fff; padding:30px; border:1px solid #eee;">
+                <h2>About Us & Social Media</h2>
+                <p>Esame prabangios mados prekyvietė, sujungianti geriausius Vinted filtrus su aukščiausios klasės aptarnavimu.</p>
+                <p>Sekite mus: <a href="#">Instagram</a> | <a href="#">Facebook</a> | <a href="#">TikTok</a></p>
+            </div>
+
+            <div id="content-support" style="display:none; background:#fff; padding:30px; border:1px solid #eee;">
+                <h2>Customer Support</h2>
+                <p>Turite klausimų? Mūsų komanda pasiruošusi padėti 24/7. Rašykite mums per žinučių sistemą prisijungę prie paskyros.</p>
+            </div>
+
+            <div id="content-privacy" style="display:none; background:#fff; padding:30px; border:1px solid #eee;">
+                <h2>Privacy Policy</h2>
+                <p>Mes saugome jūsų duomenis pagal GDPR reikalavimus. Jūsų informacija niekada nebus perduota trečiosioms šalims.</p>
+            </div>
+
+            <!-- ADMIN PANELĖ -->
+            <div id="content-admin" style="display:none;" class="admin-panel">
+                <h2>👑 Slaptas Prekių ir Pranešimų Valdymas</h2>
+                <div style="margin-bottom: 30px;">
+                    <h3>Siųsti pranešimą pirkėjams</h3>
+                    <input type="text" id="msg-receiver" placeholder="Pirkėjo el. paštas (arba įrašykite 'all' visiems)" style="width:100%; padding:10px; margin-bottom:10px;">
+                    <textarea id="msg-content" placeholder="Žinutės tekstas..." style="width:100%; padding:10px; height:80px; margin-bottom:10px;"></textarea>
+                    <button class="btn" onclick="app.sendAdminMessage()">Išsiųsti pranešimą</button>
+                </div>
+
+                <h3>Įkelti naują drabužį</h3>
+                <form id="product-form" onsubmit="app.addProduct(event)">
+                    <div class="form-group">
+                        <input type="text" id="p-title" placeholder="Pavadinimas" required>
+                        <input type="number" step="0.01" id="p-price" placeholder="Kaina (€)" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="p-brand" placeholder="Prekės ženklas (Boss, Ralph Lauren...)">
+                        <input type="text" id="p-size" placeholder="Dydis">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="p-color" placeholder="Spalva">
+                        <input type="text" id="p-material" placeholder="Medžiaga">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="p-category" placeholder="Kategorija (dress, skirt...)">
+                        <input type="text" id="p-condition" placeholder="Būklė">
+                    </div>
+                    <div class="form-group">
+                        <input type="number" step="0.1" id="p-weight" placeholder="Svoris (kg)">
+                        <input type="text" id="p-box" placeholder="Dėžės dydis (S, M, L)">
+                    </div>
+                    <div class="form-group" style="grid-template-columns: 1fr;">
+                        <input type="text" id="p-image" placeholder="Nuotraukos URL nuoroda iš Supabase Storage">
+                        <textarea id="p-desc" placeholder="Prekės aprašymas..."></textarea>
+                    </div>
+                    <div class="form-group" style="grid-template-columns: 1fr;">
+                        <label><input type="checkbox" id="p-bidding"> Įjungti 5 dienų biddingo zoną šiam drabužiui</label>
+                    </div>
+                    <button type="submit" class="btn" style="background:#10b981;">🚀 Paleisti Prekę į Parduotuvę</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 👑 ĮRAŠYKITE SAVO SUPABASE DUOMENIS ČIA KOMPIUTERYJE ---
+        const SUPABASE_URL = "ĮKLIJUOK_SAVO_SUPABASE_URL_ČIA";
+        const SUPABASE_ANON_KEY = "ĮKLIJUOK_SAVO_SUPABASE_ANON_KEY_ČIA";
+        const ADMIN_EMAIL = "tavo-el-pastas@gmail.com"; 
+
+        let supabaseClient = null;
+        if(SUPABASE_URL !== "ĮKLIJUOK_SAVO_SUPABASE_URL_ČIA") {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
+        class ParduotuveApp {
+            constructor() {
+                this.user = null;
+                this.allProducts = [];
+            }
+            init() {
+                if(!supabaseClient) {
+                    document.getElementById('main-view').innerHTML = "<h2 style='text-align:center;color:red;padding:40px;'>Atidarykite šį failą kompiuteryje su Notepad ir 123 eilutėje įrašykite savo Supabase raktus!</h2>";
+                    return;
+                }
+                supabaseClient.auth.onAuthStateChange((event, session) => {
+                    this.user = session?.user || null;
+                    this.updateAuthUI();
+                    this.loadProducts();
+                });
+            }
+            updateAuthUI() {
+                const statusDiv = document.getElementById('auth-status');
+                const authView = document.getElementById('auth-view');
+                if (this.user) {
+                    statusDiv.innerHTML = `Prisijungęs: <b>${this.user.email}</b> <button onclick="app.logout()" style="padding:5px 10px; margin-left:10px;">Atsijungti</button>`;
+                    authView.style.display = 'none';
+                    if(this.user.email === ADMIN_EMAIL) {
+                        document.getElementById('admin-tab').style.display = 'block';
+                    }
+                } else {
+                    statusDiv.innerHTML = `<button onclick="document.getElementById('auth-view').style.display='block'" class="btn" style="padding:8px 15px;">Prisijungti</button>`;
+                    document.getElementById('admin-tab').style.display = 'none';
+                }
+            }
+            async login() {
+                const e = document.getElementById('auth-email').value;
+                const p = document.getElementById('auth-password').value;
+                const { error } = await supabaseClient.auth.signInWithPassword({ email: e, password: p });
+                if(error) alert(error.message);
+            }
+            async signUp() {
+                const e = document.getElementById('auth-email').value;
+                const p = document.getElementById('auth-password').value;
+                const { error } = await supabaseClient.auth.signUp({ email: e, password: p });
+                if(error) alert(error.message); else alert('Registracija sėkminga! Galite prisijungti.');
+            }
+            async logout() { await supabaseClient.auth.signOut(); }
+            switchTab(tab) {
+                ['shop', 'about', 'support', 'privacy', 'admin'].forEach(t => {
+                    const el = document.getElementById('content-' + t);
+                    if(el) el.style.display = (t === tab) ? 'block' : 'none';
+                });
+                const tabs = document.querySelectorAll('.nav-tabs span');
+                tabs.forEach(el => el.classList.remove('active'));
+                event.target.classList.add('active');
+            }
+            async loadProducts() {
+                const { data, error } = await supabaseClient.from('products').select('*');
+                if(!error && data) {
+                    this.allProducts = data;
+                    this.renderProducts(data);
+                }
+            }
+            renderProducts(list) {
+                const grid = document.getElementById('products-grid');
+                grid.innerHTML = '';
+                list.forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    let holdBadge = p.status === 'on_hold' ? '<div class="hold-badge">On Hold</div>' : '';
+                    card.innerHTML = `
+                        ${holdBadge}
+                        <img src="${p.image_url || 'https://via.placeholder.com/300'}" style="width:100%; height:240px; object-fit:cover;">
+                        <small style="color:gray; text-transform:uppercase; margin-top:10px;">${p.brand || 'No Brand'}</small>
+                        <h3 style="margin:5px 0;">${p.title}</h3>
+                        <p style="font-size:14px; color:#555; flex-grow:1;">${p.description || ''}</p>
+                        <p style="font-size:12px; background:#f0f0f0; padding:5px;">Dydis: ${p.size || '-'} | Spalva: ${p.color || '-'}</p>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
+                            <span style="font-size:20px; font-weight:bold;">${p.price} €</span>
+                            <button class="btn" style="padding:8px 15px;" ${p.status==='on_hold'?'disabled':''}>${p.is_bidding ? 'Siūlyti kainą' : 'Pirkti'}</button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+            filterProducts() {
+                const title = document.getElementById('search-title').value.toLowerCase();
+                const min = parseFloat(document.getElementById('filter-price-min').value) || 0;
+                const max = parseFloat(document.getElementById('filter-price-max').value) || Infinity;
+                const brand = document.getElementById('filter-brand').value;
+                const color = document.getElementById('filter-color').value;
+                const size = document.getElementById('filter-size').value;
+
+                const filtered = this.allProducts.filter(p => {
+                    return p.title.toLowerCase().includes(title) &&
+                           p.price >= min && p.price <= max &&
+                           (brand === '' || p.brand === brand) &&
+                           (color === '' || p.color === color) &&
+                           (size === '' || p.size === size);
+                });
+                this.renderProducts(filtered);
+            }
+            async addProduct(e) {
+                e.preventDefault();
+                const title = document.getElementById('p-title').value;
+                const price = parseFloat(document.getElementById('p-price').value);
+                const brand = document.getElementById('p-brand').value;
+                const size = document.getElementById('p-size').value;
+                const color = document.getElementById('p-color').value;
+                const material = document.getElementById('p-material').value;
+                const category = document.getElementById('p-category').value;
+                const condition = document.getElementById('p-condition').value;
+                const weight = parseFloat(document.getElementById('p-weight').value) || 0;
+                const box = document.getElementById('p-box').value;
+                const image = document.getElementById('p-image').value;
+                const desc = document.getElementById('p-desc').value;
+                const isBidding = document.getElementById('p-bidding').checked;
+
+                let endsAt = null;
+                if(isBidding) {
+                    let d = new Date();
+                    d.setDate(d.getDate() + 5);
+                    endsAt = d.toISOString();
+                }
+
+                const { error } = await supabaseClient.from('products').insert([{
+                    title, price, brand, size, color, material, category, condition,
+                    weight_kg: weight, box_size: box, image_url: image, description: desc,
+                    is_bidding: isBidding, bidding_ends_at: endsAt, status: 'free'
+                }]);
+
+                if(error) alert(error.message);
+                else { alert('Prekė sėkmingai pridėta gyvai!'); document.getElementById('product-form').reset(); this.loadProducts(); }
+            }
+            async sendAdminMessage() {
+                const receiver = document.getElementById('msg-receiver').value;
+                const content = document.getElementById('msg-content').value;
+                const { error } = await supabaseClient.from('messages').insert([{ sender: 'admin', receiver_email: receiver, content }]);
+                if(error) alert(error.message); else { alert('Žinutė išsiųsta visiems pirkėjams!'); document.getElementById('msg-receiver').value=''; document.getElementById('msg-content').value=''; }
+            }
+            buyPremium() { alert('PayPal integracija: nukreipiama į PayPal mokėjimo langą (25€)...'); }
+        }
+
+        const app = new ParduotuveApp();
+        window.onload = () => app.init();
+    </script>
+</body>
+</html>
