@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SECOND GENERATION</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1A3A2B;
+            --bg-pastel: #F7F4EF;
+            --sage: #D1E0D7;
+            --text-dark: #2C3E35;
+            --text-light: #F7F4EF;
+            --accent-gold: #C5A880;
+            --shadow: 0 4px 15px rgba(44,62,53,0.08);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; }
+        body { background-color: var(--bg-pastel); color: var(--text-dark); min-height: 100vh; display: flex; flex-direction: column; }
+        header { background-color: var(--primary); color: var(--text-light); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent-gold); }
+        header h1 { font-family: 'Cormorant Garamond', serif; font-size: 2.4rem; letter-spacing: 3px; font-weight: 600; }
+        .wrapper { display: flex; flex: 1; position: relative; }
+        .admin-sidebar { width: 280px; background: white; border-right: 1px solid var(--sage); padding: 30px 20px; display: none; flex-direction: column; gap: 15px; }
+        .admin-sidebar h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; margin-bottom: 10px; color: var(--primary); }
+        .sidebar-btn { padding: 12px 15px; border: none; background: none; text-align: left; font-size: 0.95rem; cursor: pointer; color: var(--text-dark); border-radius: 6px; transition: 0.2s; font-weight: 500; }
+        .sidebar-btn:hover, .sidebar-btn.active { background: var(--sage); color: var(--primary); }
+        .content { flex: 1; padding: 40px; }
+        .btn-premium { background: var(--accent-gold); color: white; border: none; padding: 12px 25px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; border-radius: 4px; cursor: pointer; transition: 0.3s; }
+        .btn-premium:hover { background: #b3946b; transform: translateY(-2px); }
+        .premium-banner { background: linear-gradient(135deg, var(--primary), #11261c); color: var(--text-light); padding: 30px; border-radius: 12px; text-align: center; border: 1px solid var(--accent-gold); margin-bottom: 40px; display: block; position: relative; box-shadow: var(--shadow); }
+        .premium-banner h2 { font-family: 'Cormorant Garamond', serif; font-size: 2rem; margin-bottom: 10px; letter-spacing: 1px; color: var(--accent-gold); }
+        .premium-banner p { font-size: 1rem; max-width: 700px; margin: 0 auto 20px auto; line-height: 1.6; font-weight: 300; }
+        .auth-container { max-width: 400px; margin: 60px auto; background: white; padding: 40px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--sage); text-align: center; }
+        .auth-container h2 { font-family: 'Cormorant Garamond', serif; font-size: 2rem; margin-bottom: 25px; color: var(--primary); }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; color: var(--text-dark); letter-spacing: 0.5px; }
+        .form-control { width: 100%; padding: 12px; border: 1px solid var(--sage); background: var(--bg-pastel); border-radius: 6px; font-size: 1rem; color: var(--text-dark); outline: none; }
+        .form-control:focus { border-color: var(--accent-gold); }
+        .btn-primary { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-bottom: 10px; }
+        .btn-primary:hover { background: #234f3b; }
+        .btn-secondary { width: 100%; padding: 14px; background: transparent; color: var(--text-dark); border: 1px solid var(--sage); border-radius: 6px; font-weight: 500; font-size: 1rem; cursor: pointer; transition: 0.2s; }
+        .btn-secondary:hover { background: var(--sage); }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; margin-top: 30px; }
+        .card { background: white; border-radius: 12px; border: 1px solid var(--sage); overflow: hidden; box-shadow: var(--shadow); transition: 0.3s; position: relative; display: flex; flex-direction: column; }
+        .card:hover { transform: translateY(-5px); }
+        .card-img { width: 100%; height: 320px; object-fit: cover; background: #e8e4dc; }
+        .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .card-title { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 600; margin-bottom: 8px; }
+        .card-price { font-size: 1.2rem; font-weight: 600; color: var(--primary); margin-bottom: 15px; }
+        .badge-hold { position: absolute; top: 15px; right: 15px; background: #d9534f; color: white; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; }
+        .badge-bidding { position: absolute; top: 15px; left: 15px; background: var(--accent-gold); color: white; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; }
+        .info-section { background: white; padding: 40px; border-radius: 12px; border: 1px solid var(--sage); box-shadow: var(--shadow); line-height: 1.8; margin-top: 30px; }
+        .info-section h2 { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; margin-bottom: 20px; color: var(--primary); border-bottom: 1px solid var(--sage); padding-bottom: 10px; }
+        .info-section p { font-size: 1.05rem; margin-bottom: 15px; font-weight: 300; }
+        .nav-links { display: flex; gap: 25px; }
+        .nav-links a { color: var(--text-light); text-decoration: none; font-size: 0.9rem; font-weight: 400; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; cursor: pointer; }
+        .nav-links a:hover { color: var(--accent-gold); }
+        .notification-toast { position: fixed; bottom: 30px; right: 30px; background: var(--primary); color: white; padding: 20px 30px; border-radius: 8px; border-left: 5px solid var(--accent-gold); box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; z-index: 10000; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        footer { background-color: var(--primary); color: var(--text-light); padding: 50px 40px; text-align: center; border-top: 2px solid var(--accent-gold); margin-top: auto; }
+        footer p { font-size: 0.9rem; font-weight: 300; opacity: 0.8; }
+        footer a { color: var(--accent-gold); text-decoration: none; font-weight: 500; transition: 0.2s; }
+        footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <script>
+        // 🔴🔴🔴 CONFIGURATION (ČIA ĮRAŠYK SAVO DUOMENIS) 🔴🔴🔴
+        const SUPABASE_URL = "https://wsjsdmwghajubftidgcn.supabase.co";
+        const SUPABASE_ANON_KEY = "ĮKLIJUOK_SAVO_ANON_PUBLIC_RAKTĄ_IŠ_SUPABASE";
+        const ADMIN_EMAIL = "second.generation2026@gmail.com";
+        const PAYPAL_ME_URL = ""; 
+
+        let supabaseClient;
+        let currentUser = null;
+        let currentLang = 'EN'; 
+
+        const translate = {
+            LT: {
+                asortimentas: "Mūsų Asortimentas",
+                bidding: "Live Bidding Aukcionai",
+                about: "Apie Mus",
+                privacy: "Privatumo Politika",
+                login: "Prisijungti",
+                register: "Registruotis",
+                logout: "Atsijungti",
+                add_item: "Pridėti Prekę",
+                edit_item: "Redaguoti Prekę",
+                messages: "Žinučių Centras",
+                orders: "Užsakymų Istorija",
+                hold: "REZERVUOTA",
+                live: "GYVAS STATYMAS",
+                price: "Kaina",
+                current_bid: "Didžiausias statymas",
+                buy_btn: "Pirkti Dabar",
+                bid_btn: "Siūlyti Kainą",
+                username: "Vartotojo vardas",
+                msg_placeholder: "Įrašykite žinutę...",
+                send: "Siųsti",
+                all_users: "Visiems vartotojams",
+                shipping: "Siuntimo Skaičiuoklis"
+            },
+            EN: {
+                asortimentas: "Our Collection",
+                bidding: "Live Bidding",
+                about: "About Us",
+                privacy: "Privacy Policy",
+                login: "Log In",
+                register: "Register",
+                logout: "Log Out",
+                add_item: "Add Product",
+                edit_item: "Edit Product",
+                messages: "Message Center",
+                orders: "Orders History",
+                hold: "ON HOLD",
+                live: "LIVE BID",
+                price: "Price",
+                current_bid: "Current Bid",
+                buy_btn: "Buy Now",
+                bid_btn: "Place Bid",
+                username: "Username / Email",
+                msg_placeholder: "Type a message...",
+                send: "Send",
+                all_users: "All users",
+                shipping: "Shipping Calculator"
+            }
+        };
+
+        window.onload = function() {
+            if (SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== "Idėkite savo anonimini raktą čia") {
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                checkSession();
+            }
+            switchView('collection');
+        };
+
+        function checkSession() {
+            supabaseClient.auth.getSession().then(({ data: { session } }) => {
+                if (session) {
+                    currentUser = session.user;
+                    if (currentUser.email === ADMIN_EMAIL) {
+                        currentLang = 'LT';
+                        document.getElementById('adminSidebar').style.display = 'flex';
+                    } else {
+                        currentLang = 'EN';
+                        document.getElementById('adminSidebar').style.display = 'none';
+                    }
+                    updateNav();
+                    loadInterface();
+                }
+            });
+        }
+
+        function updateNav() {
+            const nav = document.getElementById('navLinks');
+            const t = translate[currentLang];
+            nav.innerHTML = `
+                <a onclick="switchView('collection')">${t.asortimentas}</a>
+                <a onclick="switchView('bidding')">${t.bidding}</a>
+                <a onclick="switchView('about')">${t.about}</a>
+                <a onclick="switchView('privacy')">${t.privacy}</a>
+            `;
+            if (currentUser) {
+                nav.innerHTML += `<a onclick="handleLogout()">${t.logout} (${currentUser.email})</a>`;
+            } else {
+                nav.innerHTML += `<a onclick="switchView('auth')">${translate['EN'].login} / ${translate['EN'].register}</a>`;
+            }
+        }
+
+        function switchView(view) {
+            const content = document.getElementById('mainContent');
+            const t = translate[currentLang];
+            updateNav();
+
+            if (view === 'collection') {
+                content.innerHTML = `
+                    <div class="premium-banner" id="premiumBanner">
+                        <h2>PREMIUM MEMBERSHIP</h2>
+                        <p>Get 5 hours early access to all brand new items & exclusive bidding opportunities for only €25/month! Elevate your fashion acquisition strategy.</p>
+                        <button class="btn-premium" onclick="triggerPremiumPay()">Subscribe Now — €25</button>
+                    </div>
+                    <h2>${t.asortimentas}</h2>
+                    <div class="grid-container" id="productsGrid"></div>
+                `;
+                loadProducts(false);
+            } else if (view === 'bidding') {
+                content.innerHTML = `
+                    <h2>${t.bidding}</h2>
+                    <div class="grid-container" id="biddingGrid"></div>
+                `;
+                loadProducts(true);
+            } else if (view === 'about') {
+                content.innerHTML = `
+                    <div class="info-section">
+                        <h2>${t.about}</h2>
+                        <p>We are a curated pre-owned fashion platform dedicated to bringing you authentic, high-end branded clothing in excellent condition at an accessible price point.</p>
+                        <p>Our platform focuses on exclusive drops, sustainable fashion choices, and an immersive live bidding ecosystem designed for modern style enthusiasts globally.</p>
+                    </div>
+                `;
+            } else if (view === 'privacy') {
+                content.innerHTML = `
+                    <div class="info-section">
+                        <h2>${t.privacy}</h2>
+                        <p>Your privacy is deeply paramount to us. All personal data collected on Second Generation is utilized exclusively for account authentication, processing secure purchases, dynamic hold systems, and calculating verified shipping rates.</p>
+                        <p>Payment information is securely processed externally via PayPal. We guarantee that your private records will never be distributed, leased, or sold to any third-party marketing entities.</p>
+                    </div>
+                `;
+            } else if (view === 'auth') {
+                showAuthForm();
+            } else if (view === 'add_item') {
+                showAddItemForm();
+            } else if (view === 'messages') {
+                showMessagesPanel();
+            } else if (view === 'orders') {
+                showOrdersPanel();
+            }
+        }
+
+        function showAuthForm() {
+            const content = document.getElementById('mainContent');
+            content.innerHTML = `
+                <div class="auth-container">
+                    <h2 id="authTitle">LOG IN / REGISTER</h2>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="authEmail" class="form-control" placeholder="name@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="authPassword" class="form-control" placeholder="••••••••">
+                    </div>
+                    <button class="btn-primary" onclick="handleAuth('login')">Sign In</button>
+                    <button class="btn-secondary" onclick="handleAuth('signup')">Create Account</button>
+                    <p id="authError" style="color: #d9534f; margin-top: 15px; font-size: 0.9rem; display: none;"></p>
+                </div>
+            `;
+        }
+
+        async function handleAuth(type) {
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            const errEl = document.getElementById('authError');
+            errEl.style.display = 'none';
+
+            if (!supabaseClient) {
+                errEl.innerText = "Supabase configuration missing or invalid. Check credentials inside the file code.";
+                errEl.style.display = 'block';
+                return;
+            }
+
+            if (type === 'signup') {
+                const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                if (error) { errEl.innerText = error.message; errEl.style.display = 'block'; }
+                else { alert("Registration successful! You can now sign in."); }
+            } else {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) { errEl.innerText = error.message; errEl.style.display = 'block'; }
+                else {
+                    currentUser = data.user;
+                    if (currentUser.email === ADMIN_EMAIL) {
+                        currentLang = 'LT';
+                        document.getElementById('adminSidebar').style.display = 'flex';
+                    } else {
+                        currentLang = 'EN';
+                        document.getElementById('adminSidebar').style.display = 'none';
+                    }
+                    switchView('collection');
+                    showNotification("Sveiki sugrįžę! / Welcome back!");
+                }
+            }
+        }
+
+        async function handleLogout() {
+            if (supabaseClient) await supabaseClient.auth.signOut();
+            currentUser = null;
+            currentLang = 'EN';
+            document.getElementById('adminSidebar').style.display = 'none';
+            switchView('collection');
+        }
+
+        function loadProducts(isBiddingView) {
+            const container = document.getElementById(isBiddingView ? 'biddingGrid' : 'productsGrid');
+            if (!container) return;
+            
+            const t = translate[currentLang];
+            const sampleProducts = [
+                { id: 1, title: "Archive Velvet Blazer", price: 145, bidding: isBiddingView, current_bid: 160, hold: true, img: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500" },
+                { id: 2, title: "Silk Sage Trenchcoat", price: 280, bidding: isBiddingView, current_bid: 295, hold: false, img: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=500" },
+                { id: 3, title: "Monogram Leather Boots", price: 190, bidding: isBiddingView, current_bid: 210, hold: false, img: "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=500" }
+            ];
+
+            container.innerHTML = sampleProducts.map(p => `
+                <div class="card">
+                    ${p.hold ? `<div class="badge-hold">${t.hold} (15m)</div>` : ''}
+                    ${p.bidding ? `<div class="badge-bidding">${t.live}</div>` : ''}
+                    <img src="${p.img}" class="card-img" alt="${p.title}">
+                    <div class="card-body">
+                        <div>
+                            <div class="card-title">${p.title}</div>
+                            <div class="card-price">${p.bidding ? `${t.current_bid}: €${p.current_bid}` : `${t.price}: €${p.price}`}</div>
+                        </div>
+                        ${p.bidding ? 
+                            `<button class="btn-primary" onclick="triggerBidPay(${p.id}, ${p.current_bid + 15})">${t.bid_btn} (+€15)</button>` : 
+                            `<button class="btn-primary" ${p.hold ? 'disabled style="background:#aaa;"' : ''} onclick="triggerOrderPay(${p.id}, ${p.price})">${p.hold ? t.hold : t.buy_btn}</button>`
+                        }
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showAddItemForm() {
+            const content = document.getElementById('mainContent');
+            content.innerHTML = `
+                <div class="info-section" style="max-width: 600px; margin: 0 auto;">
+                    <h2>Pridėti naują drabužį / prekę</h2>
+                    <div class="form-group"><label>Pavadinimas</label><input type="text" class="form-control" placeholder="pvz. Vintage Leather Jacket"></div>
+                    <div class="form-group"><label>Aprašymas</label><textarea class="form-control" rows="3" placeholder="Išsamus prekinis aprašymas..."></textarea></div>
+                    <div class="form-group"><label>Pradinė Kaina (€)</label><input type="number" class="form-control" placeholder="100"></div>
+                    <div class="form-group">
+                        <label>Pardavimo režimas</label>
+                        <select class="form-control">
+                            <option value="standard">Tiesioginis pardavimas (Vitrinoje)</option>
+                            <option value="bidding">Live Bidding (5 dienų aukcionas)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Pakuotės dydis ir svoris</label>
+                        <select class="form-control">
+                            <option value="S">S dydis (iki 0.5kg) - Mažiems aksesuarams, marškinėliams</option>
+                            <option value="M">M dydis (iki 2kg) - Džinsams, lengviems megztiniams</option>
+                            <option value="L">L dydis (iki 5kg) - Sunkesniems batams, paltams, striukėms</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary" onclick="showNotification('Prekė sėkmingai sukurta sandėlyje!'); switchView('collection');">Įkelti prekę į asortimentą</button>
+                </div>
+            `;
+        }
+
+        function showMessagesPanel() {
+            const content = document.getElementById('mainContent');
+            content.innerHTML = `
+                <div class="info-section" style="max-width: 700px; margin: 0 auto;">
+                    <h2>Žinučių ir Pranešimų Centras</h2>
+                    <div class="form-group">
+                        <label>Vartotojo El. Paštas arba Vartotojo vardas (Username)</label>
+                        <label style="margin-top:10px;"><input type="checkbox" id="broadcastCheck"> Siųsti visiems vartotojams (Mass Broadcast)</label>
+                    </div>
+                    <div class="form-group">
+                        <label>Žinutės tekstas</label>
+                        <textarea id="msgBody" class="form-control" rows="4" placeholder="Parašykite asmeninį pranešimą arba nuolaidų pasiūlymą..."></textarea>
+                    </div>
+                    <button class="btn-primary" onclick="showNotification('Žinutė išsiųsta sėkmingai!'); id('msgBody').value='';">Išsiųsti pranešimą</button>
+                </div>
+            `;
+        }
+
+        function showOrdersPanel() {
+            const content = document.getElementById('mainContent');
+            content.innerHTML = `
+                <div class="info-section">
+                    <h2>Užsakymų ir Bidding laimėtojų istorija</h2>
+                    <p style="font-weight:400; color:#666; margin-bottom:20px;">Čia gyvai matysite visus įvykdytus krepšelių pirkimus ir pasibaigusius 5 dienų aukcionus.</p>
+                    <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.95rem;">
+                        <thead>
+                            <tr style="background:var(--sage); color:var(--primary);"><th style="padding:12px;">Užsakymo Nr.</th><th style="padding:12px;">Prekė</th><th style="padding:12px;">Pirkėjas</th><th style="padding:12px;">Suma (su siuntimu)</th><th style="padding:12px;">Būsena</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom:1px solid var(--sage);"><td style="padding:12px; font-weight:600;">#SG-2026-8941</td><td style="padding:12px;">Archive Velvet Blazer</td><td style="padding:12px;">buyer.global@example.com</td><td style="padding:12px; font-weight:600;">€165.50</td><td style="padding:12px; color:green; font-weight:600;">Apmokėta (PayPal)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function triggerPremiumPay() {
+            const orderNum = `PREMIUM-${Math.floor(1000 + Math.random() * 9000)}`;
+            const payUrl = PAYPAL_ME_URL ? `${PAYPAL_ME_URL}/25EUR` : `https://paypal.me`;
+            alert(`Apmokėjimui generuojamas unikalus kodas: ${orderNum}
+Suma: €25.00
+Jūs būsite nukreiptas į asmeninį PayPal.`);
+            window.open(payUrl, '_blank');
+        }
+
+        function triggerOrderPay(itemId, price) {
+            const orderNum = `SG-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+            const estShipping = 14.50;
+            const total = (price + estShipping).toFixed(2);
+            const payUrl = PAYPAL_ME_URL ? `${PAYPAL_ME_URL}/${total}EUR` : `https://paypal.me`;
+            alert(`Užsakymo numeris: #${orderNum}
+Prekės kaina: €${price}
+Siuntimas: €${estShipping}
+
+Iš viso pervedimui paruošta suma: €${total}
+Paspaudus OK atsidarys PayPal langas.`);
+            window.open(payUrl, '_blank');
+        }
+
+        function triggerBidPay(itemId, bidAmount) {
+            const orderNum = `BID-${Math.floor(1000 + Math.random() * 9000)}`;
+            alert(`Jūsų statymas priimtas! Pasiūlyta suma: €${bidAmount}
+Unikalus statymo numeris: #${orderNum}
+Jei laimėsite per 5 dienas, gausite tiesioginę PayPal nuorodą šiai sumai.`);
+            showNotification(`Naujas didžiausias statymas: €${bidAmount}!`);
+        }
+
+        function showNotification(text) {
+            const toast = document.getElementById('notifToast');
+            document.getElementById('notifText').innerText = text;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 4000);
+        }
+
+        function loadInterface() {}
+        function id(i){ return document.getElementById(i); }
+    </script>
+
+    <header>
+        <h1>SECOND GENERATION</h1>
+        <div class="nav-links" id="navLinks"></div>
+    </header>
+
+    <div class="wrapper">
+        <aside class="admin-sidebar" id="adminSidebar">
+            <h3>Valdymo pultas</h3>
+            <button class="sidebar-btn active" onclick="switchView('collection')">Asortimento vitrina</button>
+            <button class="sidebar-btn" onclick="switchView('add_item')">🔴 Pridėti prekę</button>
+            <button class="sidebar-btn" onclick="switchView('messages')">🔴 Žinučių centras</button>
+            <button class="sidebar-btn" onclick="switchView('orders')">🔴 Užsakymų istorija</button>
+        </aside>
+
+        <section class="content" id="mainContent">
+        </section>
+    </div>
+    
+    <div class="notification-toast" id="notifToast">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div style="background:var(--accent-gold); width:10px; height:10px; border-radius:50%;"></div>
+            <span id="notifText" style="font-size:0.95rem; font-weight:500;"></span>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 SECOND GENERATION. Visi duomenys naudojami griežtai tik pirkimų apdorojimui ir saugiems pervedimams.</p>
+        <p style="margin-top: 12px; font-size:0.85rem;">Official Instagram: <a href="https://instagram.com/secondgeneration.official" target="_blank">@secondgeneration.official</a></p>
+    </footer>
+
+</body>
+</html>
