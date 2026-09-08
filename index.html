@@ -1,17 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-  <script>
-  // Šis kodas automatiškai išvalo seną pirkėjo atmintį, kai parduotuvė atnaujinama
-  const SVETAINES_VERSIJA = "1.0.1"; 
-  if (localStorage.getItem("puslapio_versija") !== SVETAINES_VERSIJA) {
+<script>
+  // Šis kodas visiškai išvalo telefonų atmintį po kiekvieno atnaujinimo
+  const NAUJA_VERSIJA = "2.0.1";
+
+  if (localStorage.getItem("parduotuves_versija") !== NAUJA_VERSIJA) {
+    // 1. Išvalome LocalStorage
     localStorage.clear();
-    localStorage.setItem("puslapio_versija", SVETAINES_VERSIJA);
+    localStorage.setItem("parduotuves_versija", NAUJA_VERSIJA);
+
+    // 2. Išvalome Cache Storage (Svetainės failų atmintį)
+    if (window.caches) {
+      caches.keys().then(names => {
+        names.forEach(name => caches.delete(name));
+      });
+    }
+
+    // 3. Išvalome IndexedDB (Giliąsias duomenų bazes)
+    if (window.indexedDB && indexedDB.databases) {
+      indexedDB.databases().then(dbs => {
+        dbs.forEach(db => {
+          if (db.name) indexedDB.deleteDatabase(db.name);
+        });
+      });
+    }
+
+    // 4. Perkrauname puslapį, kad viskas užsikrautų iš naujo
+    setTimeout(() => { window.location.reload(true); }, 500);
   }
 </script>
+
+
 
 
 <meta charset="UTF-8">
